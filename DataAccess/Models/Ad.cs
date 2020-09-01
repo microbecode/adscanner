@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AdScanner.Models
+namespace DataAccess.Models
 {
     public class Ad
     {
@@ -19,9 +19,17 @@ namespace AdScanner.Models
         public decimal Area { get; set; }
         public string Commodities { get; set; }
         public string Description { get; set; }
+        public string PriceStr { get; set; }
         public decimal Price { get; set; }
-        public int PriceType { get; set; }
+        public PriceTypeE PriceType { get; set; }
         public DateTime FirstSeen { get; set; }
         public DateTime NotSeenAnymore { get; set; }
+    }
+
+    public enum PriceTypeE
+    {
+        Simple = 0,
+        MonthlyRent = 1,
+        Exchange
     }
 }

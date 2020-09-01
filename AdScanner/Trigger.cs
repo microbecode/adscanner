@@ -5,15 +5,20 @@ using Microsoft.Extensions.Logging;
 
 namespace AdScanner
 {
-    public static class Trigger
+    public class Trigger
     {
+        private readonly ScannerService _service;
+        public Trigger(ScannerService service)
+        {
+            _service = service;
+        }
+
         [FunctionName(nameof(Trigger))]
-        public static void Run([TimerTrigger("0 */5 * * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
+        public void Run([TimerTrigger("0 0 */2 * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            var serv = new ScannerService();
-            serv.PerformScan();
+            _service.PerformScan();
         }
     }
 }

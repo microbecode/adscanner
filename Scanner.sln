@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdScanner", "AdScanner\AdScanner.csproj", "{CC5EA28B-FF9B-4952-A68D-8CB649334EBF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\DataAccess.csproj", "{01DCFAE6-0A72-4B8B-BCFE-4A59A6670E7C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{CC5EA28B-FF9B-4952-A68D-8CB649334EBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC5EA28B-FF9B-4952-A68D-8CB649334EBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC5EA28B-FF9B-4952-A68D-8CB649334EBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01DCFAE6-0A72-4B8B-BCFE-4A59A6670E7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01DCFAE6-0A72-4B8B-BCFE-4A59A6670E7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01DCFAE6-0A72-4B8B-BCFE-4A59A6670E7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01DCFAE6-0A72-4B8B-BCFE-4A59A6670E7C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
