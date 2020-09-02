@@ -16,7 +16,8 @@ namespace AdScanner
         private readonly ScannerContext _db;
 
         public const string baseUrl = @"https://www.ss.lv";
-        public const string searchUrl = @"/lv/real-estate/homes-summer-residences/cesis-and-reg/";
+        public const string searchUrlPage1 = @"/lv/real-estate/homes-summer-residences/cesis-and-reg/";
+        public const string searchUrlPageN = "page{0}.html";
 
         public ScannerService(ScannerContext db)
         {
@@ -30,12 +31,16 @@ namespace AdScanner
             _db.SaveChanges();
         }
 
-        public IEnumerable<Ad> PerformFullScan()
+        public List<Ad> PerformFullScan()
         {
             var web = new HtmlWeb();
 
             var ads = new List<Ad>();
-            foreach (var ad in PerformFrontScan())
+            var frontPageAds = PerformFrontScan();
+
+            MarkExpired(frontPageAds);
+
+            foreach (var ad in frontPageAds)
             {
                 var exists = _db.Ads.Any(a => a.SiteId == ad.SiteId && a.PriceStr == ad.PriceStr);
                 if (exists)
@@ -82,7 +87,8 @@ namespace AdScanner
                         {
                             ad.Area = areaDec;
                         }
-                    } catch { }
+                    }
+                    catch { }
 
                     ad.Commodities = GetNextElem(mainElem, "Ērtības:");
 
@@ -98,48 +104,76 @@ namespace AdScanner
             return ads;
         }
 
-  
-        public IEnumerable<Ad> PerformFrontScan()
+        private void MarkExpired(List<Ad> frontPageAds)
         {
-            var web = new HtmlWeb();
-            var doc = web.Load(baseUrl + searchUrl);
-            //var doc = web.Load(@"c:\temp\myfile.html");
+            var ids = frontPageAds.Select(a => a.SiteId);
 
-            var nodes = doc.DocumentNode.SelectNodes("//a[@class='am']");
-            var i = 0;
-            foreach (var node in nodes)
+            var expired = _db.Ads.Where(a => a.NotSeenAnymore == null && !ids.Contains(a.SiteId));
+            foreach (var ex in expired)
             {
-                //i++;
-                //if (i > 5)
-                //{
-                //    continue;
-                //}
-                var idNode = node.Attributes.FirstOrDefault(a => a.Name.ToLower() == "id");
-                if (idNode == null)
-                {
-                    continue;
-                }
-                var anchor = node.Attributes.FirstOrDefault(a => a.Name.ToLower() == "href");
-                if (anchor == null)
-                {
-                    continue;
-                }
-
-                var price = GetNextElemTwoUp(node);
-
-                var fullUrl = baseUrl + anchor.Value;
-                var model = new Ad()
-                {
-                    SiteId = idNode.Value,
-                    SiteUrl = fullUrl,
-                    PriceStr = price
-                };
-
-                
-                
-
-                yield return model;
+                ex.NotSeenAnymore = DateTime.UtcNow;
             }
+            _db.SaveChanges();
+        }
+
+        public List<Ad> PerformFrontScan()
+        {
+            var ads = new List<Ad>();
+
+            var web = new HtmlWeb();
+
+            var page1 = baseUrl + searchUrlPage1;
+            var pages = new List<string>()
+            {
+                page1
+            };
+            for (int i = 2; i < 20; i++)
+            {
+                var newPage = page1 + string.Format(searchUrlPageN, i);
+                pages.Add(newPage);
+            }
+
+            foreach (var page in pages)
+            {
+                var doc = web.Load(page);
+
+                //var doc = web.Load(@"c:\temp\myfile.html");
+
+                var nodes = doc.DocumentNode.SelectNodes("//a[@class='am']");
+                var i = 0;
+                foreach (var node in nodes)
+                {
+                    var idNode = node.Attributes.FirstOrDefault(a => a.Name.ToLower() == "id");
+                    if (idNode == null)
+                    {
+                        continue;
+                    }
+                    if (ads.Count > 0 && ads[0].SiteId == idNode.Value)
+                    {
+                        // Non-existing page brings us to front page, no point in checking anymore
+                        return ads;
+                    }
+
+                    var anchor = node.Attributes.FirstOrDefault(a => a.Name.ToLower() == "href");
+                    if (anchor == null)
+                    {
+                        continue;
+                    }
+
+                    var price = GetNextElemTwoUp(node);
+
+                    var fullUrl = baseUrl + anchor.Value;
+                    var model = new Ad()
+                    {
+                        SiteId = idNode.Value,
+                        SiteUrl = fullUrl,
+                        PriceStr = price
+                    };
+
+                    ads.Add(model);
+                }
+            }
+            return ads;
         }
 
         private string GetNextElem(HtmlNode root, string content)

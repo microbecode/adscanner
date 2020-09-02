@@ -13,17 +13,17 @@ namespace DataAccess.Models
         public string Region { get; set; }
         public string Village { get; set; }
         public string Address { get; set; }
-        public decimal Size { get; set; }
-        public int Floors { get; set; }
-        public int Rooms { get; set; }
-        public decimal Area { get; set; }
+        public decimal? Size { get; set; }
+        public int? Floors { get; set; }
+        public int? Rooms { get; set; }
+        public decimal? Area { get; set; }
         public string Commodities { get; set; }
         public string Description { get; set; }
         public string PriceStr { get; set; }
-        public decimal Price { get; set; }
-        public PriceTypeE PriceType { get; set; }
-        public DateTime FirstSeen { get; set; }
-        public DateTime NotSeenAnymore { get; set; }
+        public decimal? Price { get; set; }
+        public PriceTypeE? PriceType { get; set; }
+        public DateTime? FirstSeen { get; set; }
+        public DateTime? NotSeenAnymore { get; set; }
     }
 
     public enum PriceTypeE
