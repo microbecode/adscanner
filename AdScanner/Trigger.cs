@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
@@ -14,11 +15,11 @@ namespace AdScanner
         }
 
         [FunctionName(nameof(Trigger))]
-        public void Run([TimerTrigger("0 0 */2 * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
+        public async Task Run([TimerTrigger("0 0 */2 * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
         {
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
-            _service.PerformScan();
+            await _service.PerformScan();
         }
     }
 }

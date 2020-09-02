@@ -25,12 +25,15 @@ namespace AdScanner
                 .Build();
 
             var connectionString = config["SqlConnectionString"];
+            var sendGridApiKey = config["SendGridApiKey"];
+            var basicReceiver = config["BasicEmailReceiver"];
 
             builder.Services.AddDbContext<ScannerContext>(
                 options => SqlServerDbContextOptionsExtensions.UseSqlServer(options, connectionString));
 
             builder.Services.AddTransient<ScannerService>();
             builder.Services.AddSingleton<Trigger>();
+            builder.Services.AddSingleton<EmailSenderService>(options => new EmailSenderService(sendGridApiKey, basicReceiver));
         }
     }
 }

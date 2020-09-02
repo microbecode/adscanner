@@ -8,27 +8,46 @@ using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
 using DataAccess.Models;
 using DataAccess;
+using System.Threading.Tasks;
 
 namespace AdScanner
 {
     public class ScannerService
     {
         private readonly ScannerContext _db;
+        private readonly EmailSenderService _sender;
 
         public const string baseUrl = @"https://www.ss.lv";
         public const string searchUrlPage1 = @"/lv/real-estate/homes-summer-residences/cesis-and-reg/";
         public const string searchUrlPageN = "page{0}.html";
 
-        public ScannerService(ScannerContext db)
+        public ScannerService(ScannerContext db, EmailSenderService sender)
         {
             _db = db;
+            _sender = sender;
         }
 
-        public void PerformScan()
+        public async Task PerformScan()
         {
+
             var data = PerformFullScan().ToList();
+            await SendChanges(data);
+
             _db.Ads.AddRange(data);
             _db.SaveChanges();
+        }
+
+        private async Task SendChanges(List<Ad> data)
+        {
+            var textList = new List<string>();
+            textList.Add("New properties found<br/>");
+            foreach (var ad in data)
+            {
+                string template = "Size: {0}, Price: {1}, Description: {2} <a target='_blank' href='{3}'>Link</a>";
+                var row = string.Format(template, ad.Size, ad.PriceStr, ad.Description, ad.SiteUrl);
+                textList.Add(row);
+            }
+            await _sender.Send(string.Join("<br/><br/>", textList));
         }
 
         public List<Ad> PerformFullScan()
