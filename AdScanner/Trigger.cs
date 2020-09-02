@@ -15,8 +15,14 @@ namespace AdScanner
         }
 
         [FunctionName(nameof(Trigger))]
-        public async Task Run([TimerTrigger("0 0 */2 * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
+        public async Task Run([TimerTrigger("0 */5 * * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
         {
+            Random rnd = new Random();
+            if (rnd.Next(1, 100) < 90)
+            {
+                return;
+            }
+
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
             await _service.PerformScan();
