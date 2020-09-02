@@ -29,7 +29,6 @@ namespace AdScanner
 
         public async Task PerformScan()
         {
-
             var data = PerformFullScan().ToList();
             await SendChanges(data);
 
@@ -155,8 +154,6 @@ namespace AdScanner
             foreach (var page in pages)
             {
                 var doc = web.Load(page);
-
-                //var doc = web.Load(@"c:\temp\myfile.html");
 
                 var nodes = doc.DocumentNode.SelectNodes("//a[@class='am']");
                 var i = 0;
