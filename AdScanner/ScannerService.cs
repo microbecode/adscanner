@@ -30,10 +30,13 @@ namespace AdScanner
         public async Task PerformScan()
         {
             var data = PerformFullScan().ToList();
-            await SendChanges(data);
+            if (data.Count > 0)
+            {
+                await SendChanges(data);
 
-            _db.Ads.AddRange(data);
-            _db.SaveChanges();
+                _db.Ads.AddRange(data);
+                _db.SaveChanges();
+            }
         }
 
         private async Task SendChanges(List<Ad> data)
@@ -46,7 +49,8 @@ namespace AdScanner
                 var row = string.Format(template, ad.Size, ad.PriceStr, ad.Description, ad.SiteUrl);
                 textList.Add(row);
             }
-            await _sender.Send(string.Join("<br/><br/>", textList));
+
+            await _sender.Send(string.Join("<br/><br/>", textList));            
         }
 
         public List<Ad> PerformFullScan()
