@@ -41,6 +41,10 @@ namespace AdScanner
                 _db.Ads.AddRange(data);
                 _db.SaveChanges();
             }
+            else
+            {
+                _log.LogInformation("No new entries found");
+            }
         }
 
         private async Task SendChanges(List<Ad> data)

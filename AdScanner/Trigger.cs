@@ -18,7 +18,7 @@ namespace AdScanner
         public async Task Run([TimerTrigger("0 */5 * * * *", RunOnStartup = true)]TimerInfo myTimer, ILogger log)
         {
             Random rnd = new Random();
-            if (rnd.Next(1, 200) < 192)
+            if (rnd.Next(1, 120) < 115)
             {
                 return;
             }
