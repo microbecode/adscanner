@@ -14,9 +14,12 @@ namespace DataAccess.Models
         public string Village { get; set; }
         public string Address { get; set; }
         public decimal? Size { get; set; }
+
+        public string SizeStr { get; set; }
         public int? Floors { get; set; }
         public int? Rooms { get; set; }
         public decimal? Area { get; set; }
+        public string AreaStr { get; set; }
         public string Commodities { get; set; }
         public string Description { get; set; }
         public string PriceStr { get; set; }
