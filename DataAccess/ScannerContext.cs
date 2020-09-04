@@ -11,6 +11,16 @@ namespace DataAccess
         public ScannerContext(DbContextOptions<ScannerContext> options) : base(options)
         {
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Ad>()
+                .HasIndex(b => b.SiteId);
+            modelBuilder.Entity<Ad>()
+                .HasIndex(b => b.PriceStr);
+            modelBuilder.Entity<Ad>()
+                .HasIndex(b => b.NotSeenAnymore);
+        }
         public DbSet<Ad> Ads { get; set; }
     }
 }

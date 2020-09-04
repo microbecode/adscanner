@@ -32,7 +32,7 @@ namespace AdScanner
                 options => SqlServerDbContextOptionsExtensions.UseSqlServer(options, connectionString));
 
             builder.Services.AddTransient<ScannerService>();
-            builder.Services.AddSingleton<Trigger>();
+            //builder.Services.AddSingleton<Trigger>();
             builder.Services.AddSingleton<EmailSenderService>(options => new EmailSenderService(sendGridApiKey, basicReceiver));
         }
     }

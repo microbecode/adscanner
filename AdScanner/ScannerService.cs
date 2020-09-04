@@ -10,6 +10,7 @@ using DataAccess.Models;
 using DataAccess;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace AdScanner
 {
@@ -33,6 +34,7 @@ namespace AdScanner
         public async Task PerformScan()
         {
             var data = PerformFullScan().ToList();
+            _log.LogInformation("Finished full scan retrieval with {0} entries", data.Count);
             if (data.Count > 0)
             {
                 _log.LogInformation($"Sending email with {data.Count} entries");
@@ -68,15 +70,24 @@ namespace AdScanner
             var ads = new List<Ad>();
             var frontPageAds = PerformFrontScan();
 
+            _log.LogInformation("Found {0} front page ads", frontPageAds.Count);
+
             MarkExpired(frontPageAds);
+            _log.LogInformation("Passed expiration");
+
+            var allAds = _db.Ads.AsNoTracking().ToList();
+
+            //_log.LogInformation("Retrieved all ads, {0}", allAds.Count);
 
             foreach (var ad in frontPageAds)
             {
-                var exists = _db.Ads.Any(a => a.SiteId == ad.SiteId && a.PriceStr == ad.PriceStr);
+                var exists = allAds.Any(a => a.SiteId == ad.SiteId && a.PriceStr == ad.PriceStr);
                 if (exists)
                 {
+                    //_log.LogInformation("Exists, continue {0}", ad.SiteId);
                     continue;
                 }
+                _log.LogInformation($"Found new data: {ad.SiteId}");
                 ad.FirstSeen = DateTime.UtcNow;
 
                 var doc = web.Load(ad.SiteUrl);
@@ -140,14 +151,17 @@ namespace AdScanner
 
         private void MarkExpired(List<Ad> frontPageAds)
         {
-            var ids = frontPageAds.Select(a => a.SiteId);
+            var ids = frontPageAds.Select(a => a.SiteId).ToList();
 
-            var expired = _db.Ads.Where(a => a.NotSeenAnymore == null && !ids.Contains(a.SiteId));
+            var expired = _db.Ads.Where(a => a.NotSeenAnymore == null && !ids.Contains(a.SiteId)).ToList();
             foreach (var ex in expired)
             {
                 ex.NotSeenAnymore = DateTime.UtcNow;
             }
-            _db.SaveChanges();
+            if (expired.Count > 0)
+            {
+                _db.SaveChanges();
+            }
         }
 
         public List<Ad> PerformFrontScan()

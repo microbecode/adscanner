@@ -13,6 +13,10 @@ namespace AdScanner
         private readonly string _basicReceiver;
         public EmailSenderService(string apiKey, string basicReceiver)
         {
+            if (apiKey == null || basicReceiver == null)
+            {
+                throw new ArgumentException("Email sender doesn't have arguments");
+            }
             var client = new SendGridClient(apiKey);
             _client = client;
             _basicReceiver = basicReceiver;
