@@ -24,14 +24,19 @@ namespace AdScanner
 
         public async Task Send(string text)
         {
+            var split = _basicReceiver.Split(';');
             var msg = new SendGridMessage()
             {
-                From = new EmailAddress(_basicReceiver, "Pintunena Service"),
+                From = new EmailAddress(split[0], "Pintunena Service"),
                 Subject = "New properties found!",
                 //PlainTextContent = text,
                 HtmlContent = text
             };
-            msg.AddTo(new EmailAddress(_basicReceiver));
+            foreach (var receiver in split)
+            {
+                msg.AddTo(new EmailAddress(receiver));
+            }
+            
             var response = await _client.SendEmailAsync(msg);
         }
     }
