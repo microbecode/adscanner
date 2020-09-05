@@ -38,7 +38,7 @@ namespace AdScanner
             catch (Exception e)
             {
                 log.LogError(e, "Unable to perform scan");
-                await _emailer.Send($"Exception in trigger: {e.Message}");
+                await _emailer.SendError($"Exception in trigger: {e.Message}");
                 throw e;
             }
         }
