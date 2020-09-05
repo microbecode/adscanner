@@ -9,9 +9,12 @@ namespace AdScanner
     public class Trigger
     {
         private readonly ScannerService _service;
-        public Trigger(ScannerService service)
+        private readonly EmailSenderService _emailer;
+
+        public Trigger(ScannerService service, EmailSenderService emailer)
         {
             _service = service;
+            _emailer = emailer;
         }
 
         [FunctionName(nameof(Trigger))]
@@ -35,6 +38,7 @@ namespace AdScanner
             catch (Exception e)
             {
                 log.LogError(e, "Unable to perform scan");
+                await _emailer.Send($"Exception in trigger: {e.Message}");
                 throw e;
             }
         }

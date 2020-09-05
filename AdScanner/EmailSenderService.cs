@@ -29,7 +29,6 @@ namespace AdScanner
             {
                 From = new EmailAddress(split[0], "Pintunena Service"),
                 Subject = "New properties found!",
-                //PlainTextContent = text,
                 HtmlContent = text
             };
             foreach (var receiver in split)
@@ -37,6 +36,20 @@ namespace AdScanner
                 msg.AddTo(new EmailAddress(receiver));
             }
             
+            var response = await _client.SendEmailAsync(msg);
+        }
+
+        public async Task SendError(string text)
+        {
+            var split = _basicReceiver.Split(';');
+            var msg = new SendGridMessage()
+            {
+                From = new EmailAddress(split[0], "Pintunena Service"),
+                Subject = "Error in service",
+                HtmlContent = text
+            };
+            msg.AddTo(split[0]);
+           
             var response = await _client.SendEmailAsync(msg);
         }
     }
