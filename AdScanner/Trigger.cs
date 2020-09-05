@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using AdScanner.Scanners;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
@@ -8,12 +9,14 @@ namespace AdScanner
 {
     public class Trigger
     {
-        private readonly ScannerService _service;
+        private readonly HouseScanner _houseService;
+        private readonly LandScanner _landService;
         private readonly EmailSenderService _emailer;
 
-        public Trigger(ScannerService service, EmailSenderService emailer)
+        public Trigger(HouseScanner houseService, LandScanner landService, EmailSenderService emailer)
         {
-            _service = service;
+            _houseService = houseService;
+            _landService = landService;
             _emailer = emailer;
         }
 
@@ -32,8 +35,16 @@ namespace AdScanner
 
             try
             {
-                await _service.PerformScan();
-                log.LogInformation("Scan finished");
+                var housesChange = _houseService.PerformScan();
+                log.LogInformation("House scan finished");
+
+                var landsChange = _landService.PerformScan();
+                log.LogInformation("Land scan finished");
+
+                if (housesChange != null || landsChange != null)
+                {
+                    await _emailer.Send(housesChange, landsChange);
+                }
             }
             catch (Exception e)
             {

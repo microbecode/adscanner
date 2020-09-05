@@ -22,21 +22,22 @@ namespace AdScanner
             _basicReceiver = basicReceiver;
         }
 
-        public async Task Send(string text)
+        public async Task Send(string housesChanges, string landsChanges)
         {
             var split = _basicReceiver.Split(';');
+
             var msg = new SendGridMessage()
             {
                 From = new EmailAddress(split[0], "Pintunena Service"),
                 Subject = "New properties found!",
-                HtmlContent = text
+                HtmlContent = housesChanges + "<br/><hr/>" + landsChanges
             };
             foreach (var receiver in split)
             {
                 msg.AddTo(new EmailAddress(receiver));
             }
             
-            var response = await _client.SendEmailAsync(msg);
+            await _client.SendEmailAsync(msg);
         }
 
         public async Task SendError(string text)
