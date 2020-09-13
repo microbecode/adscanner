@@ -71,7 +71,6 @@ namespace AdScanner.Scanners
             _log.LogInformation("Found {0} front page ads", basics.Count);
 
             MarkExpired(basics);
-            _log.LogInformation("Passed expiration");
 
             var allDbEntries = _db.Ads.AsNoTracking().ToList();
 
