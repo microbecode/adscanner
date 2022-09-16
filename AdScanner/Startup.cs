@@ -1,5 +1,6 @@
 ﻿using AdScanner;
 using AdScanner.Scanners;
+using Azure.Data.Tables;
 using DataAccess;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
@@ -25,15 +26,17 @@ namespace AdScanner
                 .AddEnvironmentVariables()
                 .Build();
 
-            var connectionString = config["SqlConnectionString"];
             var sendGridApiKey = config["SendGridApiKey"];
             var basicReceiver = config["BasicEmailReceiver"];
 
-            builder.Services.AddDbContext<ScannerContext>(
-                options => options.UseSqlServer(connectionString, providerOptions => providerOptions.EnableRetryOnFailure()));
+            builder.Services.AddSingleton<TableClient>(options => new TableClient(config["TableConnectionString"], "Houses"));
+
+            //builder.Services.AddDbContext<ScannerContext>(
+            //    options => options.UseSqlServer(connectionString, providerOptions => providerOptions.EnableRetryOnFailure()));
 
             builder.Services.AddTransient<HouseScanner>();
-            builder.Services.AddTransient<LandScanner>();
+            System.Console.WriteLine(  "Startup end");
+           // builder.Services.AddTransient<LandScanner>();
             builder.Services.AddSingleton<EmailSenderService>(options => new EmailSenderService(sendGridApiKey, basicReceiver));
         }
     }

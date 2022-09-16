@@ -22,7 +22,7 @@ namespace AdScanner
             _basicReceiver = basicReceiver;
         }
 
-        public async Task Send(string housesChanges, string landsChanges)
+        public async Task Send(string housesChanges)
         {
             var split = _basicReceiver.Split(';');
 
@@ -30,13 +30,13 @@ namespace AdScanner
             {
                 From = new EmailAddress(split[0], "Pintunena Service"),
                 Subject = "New properties found!",
-                HtmlContent = housesChanges + "<br/><hr/>" + landsChanges
+                HtmlContent = housesChanges
             };
             foreach (var receiver in split)
             {
                 msg.AddTo(new EmailAddress(receiver));
             }
-            
+            System.Console.WriteLine("Sending email");
             await _client.SendEmailAsync(msg);
         }
 

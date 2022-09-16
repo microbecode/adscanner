@@ -11,43 +11,51 @@ using DataAccess;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Azure.Data.Tables;
 
 namespace AdScanner.Scanners
 {
     public class HouseScanner : ScannerService
-    {
-        
+    {        
         private readonly ILogger<HouseScanner> _log;
         public const string searchUrlPage1 = @"/lv/real-estate/homes-summer-residences/cesis-and-reg/";        
 
-        public HouseScanner(ScannerContext db, EmailSenderService sender, ILogger<HouseScanner> log)
+        public HouseScanner(TableClient db, /* EmailSenderService sender, */ ILogger<HouseScanner> log)
         {
             _db = db;
-            _sender = sender;
+            db.CreateIfNotExists();
+            
+            // https://lauriadscannerfnstor.table.core.windows.net/Houses
+            //_sender = sender;
             _log = log;
         }
 
         public string PerformScan()
         {
-            var data = PerformFullScan().ToList();
-            _log.LogInformation("Finished full house scan retrieval with {0} houses", data.Count);
-            if (data.Count > 0)
-            {
+             var data = PerformFullScan().ToList();
+             _log.LogInformation("Finished full house scan retrieval with {0} houses", data.Count);
+             System.Console.WriteLine("Finished full house scan retrieval with {0} houses", data.Count);
+
+             if (data.Count > 0)
+             {
                 var changes = GetChanges(data);
-
-                _db.Ads.AddRange(data);
-                _db.SaveChanges();
-
+                foreach (var d in data) {
+                    d.PartitionKey = d.Region;
+                    d.RowKey = d.SiteId + d.PriceStr;
+                    System.Console.WriteLine(   "Adding entry with partition " + d.PartitionKey + " and rowkey " + d.RowKey);
+                    _db.AddEntity(d);
+                }
                 return changes;
-            }
-            else
-            {
-                _log.LogInformation("No new entries found");
-            }
+         }
+             else
+             {
+                 _log.LogInformation("No new entries found");
+                 System.Console.WriteLine("No new");
+             }
             return null;
         }
 
-        private string GetChanges(List<Ad> data)
+        private string GetChanges(List<HouseData> data)
         {
             var textList = new List<string>();
             textList.Add("New houses found<br/><ul>");
@@ -61,34 +69,39 @@ namespace AdScanner.Scanners
             return string.Join("", textList) + "</ul>";
         }
 
-        public List<Ad> PerformFullScan()
-        {
-            var web = new HtmlWeb();
+         public List<HouseData> PerformFullScan()
+         {
+             var web = new HtmlWeb();
 
-            var ads = new List<Ad>();
-            var basics = PerformFrontScan(searchUrlPage1);
+             var ads = new List<HouseData>();
+             var basics = PerformFrontScan(searchUrlPage1);
 
-            _log.LogInformation("Found {0} front page ads", basics.Count);
+             _log.LogInformation("Found {0} front page ads", basics.Count);
+             System.Console.WriteLine("Found {0} front page ads", basics.Count);
 
-            MarkExpired(basics);
+             //
 
-            var allDbEntries = _db.Ads.AsNoTracking().ToList();
+             var allDbEntries = _db.Query<HouseData>(); //_db.Ads.AsNoTracking().ToList();
+            System.Console.WriteLine("Found " + allDbEntries.Count() + " entries");
 
-            foreach (var basic in basics)
-            {
-                var exists = allDbEntries.Any(a => a.SiteId == basic.SiteId && a.PriceStr == basic.PriceStr);
-                if (exists)
-                {
-                    continue;
-                }
-                _log.LogInformation($"Found new house: {basic.SiteId}");               
+            MarkExpired(basics, allDbEntries);
 
-                var doc = web.Load(basic.SiteUrl);
+             foreach (var basic in basics)
+             {
+                 var exists = allDbEntries.Any(a => a.SiteId == basic.SiteId && a.PriceStr == basic.PriceStr);
+                 if (exists)
+                 {
+                     continue;
+                 }
+                 _log.LogInformation($"Found new house: {basic.SiteId} and {basic.PriceStr}");      
+                 System.Console.WriteLine($"Found new house: {basic.SiteId} and {basic.PriceStr}");         
+
+                 var doc = web.Load(basic.SiteUrl);
 
                 var mainElem = doc.DocumentNode.SelectSingleNode("//div[@id='content_sys_div_msg']");
                 if (mainElem != null)
                 {
-                    var ad = new Ad()
+                    var ad = new HouseData()
                     {
                         FirstSeen = DateTime.UtcNow,
                         SiteId = basic.SiteId,
@@ -140,23 +153,22 @@ namespace AdScanner.Scanners
 
                     ads.Add(ad);
                 }
-            }
-            return ads;
-        }
+             }
+             return ads;
+         }
 
-        internal void MarkExpired(List<BasicModel> basics)
+        internal void MarkExpired(List<BasicModel> basics, Azure.Pageable<HouseData> allDbEntries)
         {
-            var ids = basics.Select(a => a.SiteId).ToList();
+            var ids = basics.Select(a => a.SiteId).Distinct().ToList();
 
-            var expired = _db.Ads.Where(a => a.NotSeenAnymore == null && !ids.Contains(a.SiteId)).ToList();
+            var expired = allDbEntries.Where(a => a.NotSeenAnymore == null && !ids.Contains(a.SiteId)).ToList();
             foreach (var ex in expired)
             {
-                ex.NotSeenAnymore = DateTime.UtcNow;
-            }
-            if (expired.Count > 0)
-            {
-                _db.SaveChanges();
+                var dbEntry = _db.Query<HouseData>(ent => ent.RowKey == ex.RowKey).First();
+                dbEntry.NotSeenAnymore = DateTime.UtcNow;
+                _db.UpdateEntity(dbEntry, Azure.ETag.All, TableUpdateMode.Replace);
             }
         }
-    }
+     }
 }
+

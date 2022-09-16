@@ -6,6 +6,8 @@
 *.user
 *.userosscache
 *.sln.docstates
+__azurite*
+__blobstorage__/*
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

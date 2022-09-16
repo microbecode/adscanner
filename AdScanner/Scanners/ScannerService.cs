@@ -11,13 +11,13 @@ using DataAccess;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Azure.Data.Tables;
 
 namespace AdScanner.Scanners
 {
     public abstract class ScannerService
     {
-        internal ScannerContext _db;
-        internal EmailSenderService _sender;
+        internal TableClient _db;
 
         public const string baseUrl = @"https://www.ss.lv";
         public const string searchUrlPageN = "page{0}.html";
