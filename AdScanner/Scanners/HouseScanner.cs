@@ -30,6 +30,21 @@ namespace AdScanner.Scanners
             _log = log;
         }
 
+        //https://stackoverflow.com/a/55609365
+        public string ToAzureKeyString(string str)
+    {
+        var sb = new StringBuilder();
+        foreach (var c in str
+            .Where(c => c != '/'
+                        && c != '\\'
+                        && c != '#'
+                        && c != '/'
+                        && c != '?'
+                        && !char.IsControl(c)))
+            sb.Append(c);
+        return sb.ToString();
+    }
+
         public string PerformScan()
         {
              var data = PerformFullScan().ToList();
@@ -41,10 +56,11 @@ namespace AdScanner.Scanners
                 var changes = GetChanges(data);
                 foreach (var d in data) {
                     d.PartitionKey = d.Region;
-                    d.RowKey = d.SiteId + d.PriceStr;
+                    d.RowKey = ToAzureKeyString(d.SiteId) + ToAzureKeyString(d.PriceStr);
                     System.Console.WriteLine(   "Adding entry with partition " + d.PartitionKey + " and rowkey " + d.RowKey);
                     _db.AddEntity(d);
                 }
+                _log.LogInformation("generated " + changes.Count() + " changes");
                 return changes;
          }
              else
@@ -57,6 +73,7 @@ namespace AdScanner.Scanners
 
         private string GetChanges(List<HouseData> data)
         {
+            _log.LogInformation("Starting to create changes");
             var textList = new List<string>();
             textList.Add("New houses found<br/><ul>");
             foreach (var ad in data)
@@ -88,7 +105,7 @@ namespace AdScanner.Scanners
 
              foreach (var basic in basics)
              {
-                 var exists = allDbEntries.Any(a => a.SiteId == basic.SiteId && a.PriceStr == basic.PriceStr);
+                 var exists = allDbEntries.Any(a => a.SiteId == ToAzureKeyString(basic.SiteId) && a.PriceStr == ToAzureKeyString(basic.PriceStr));
                  if (exists)
                  {
                      continue;

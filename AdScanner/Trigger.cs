@@ -30,7 +30,7 @@ namespace AdScanner
             {
                 log.LogInformation($"Attempted to run trigger but didn't get past the randomness: {chance} {DateTime.Now}");
                 return;
-            } 
+            }  
 
             log.LogInformation($"C# Timer trigger function executed at: {DateTime.Now}");
 
